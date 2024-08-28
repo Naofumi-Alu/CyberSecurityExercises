@@ -1,0 +1,221 @@
+
+
+Workshot fo Cyber Security
+ 
+
+Apply and understand CIA ( Confidentiality, Integrity, Availability) through a .bat program that recpolile information in SO Windows
+
+Comandos que vulneran la confidencialidad
+
+Dentro del programa CIA.bat tenemos varias funciones que ejecutan varios comandos con distintos proposito según la naturaleza del ataque que se piensa desarrollar.
+
+
+Primeramente en el programa CIA.bat encontrará la siguientes funciones con sus respectivos comandos los cuales recopilan información y ejecutan tareas en segundo plano para dicho funciones
+
+################### COMANDOS  QUE VULNERAN LA CONFIDENCIALIAD ##############
+
+GetKeyloggerInfo:
+
+El propósito de esta función consiste en ejecutar en segundo plano un programa de python de tipo keylogger. Este programa trabaja como Spyware ya que recopila toda la información mediante las pulsaciones de teclado que el objetivo realiza y las almacena para un poesterior analisis y/o para el uso de alguna herramienta automatizada que extraiga credenciales.
+
+Este pequeño programa compromete la confidencialidad del objetivo ya que esta capturando toda la información que este pueda digitar, como por ejemplo usuarios, contraeñas, correos electrónicos, numeros de tarjetas de credito, paginas de sitios web a las que se le spuede hacer un ataque.
+
+
+GetCredentials:
+
+Esta función permite obtener unformación relacioanda a sitios web y credenciales de autenticación mediante el uso de la información que proporciono un spyware en la función GetKeyloggerInfo.
+
+Los comandos utilizados son los siguientes
+
+netstat -n > ips.txt
+
+Proporciona información de las conexiones activas internas y exernas y las captura
+
+nslookup
+
+Resuleve las ip a sus nombres de dominio, tuilizado dentro de un bucle para ovbtener las aplicaciones que utiliza el objetivo apra proceder con ataques de fuerza bruta.
+
+findstr
+
+Aplica una expresión regular para enconrtar dentro del archivo generado por el keylogger los textos correspondientes a correso electronicos(con solo el correo se garantiza el 50% del vector de ataque)
+
+
+
+GetSystemInfo:
+
+Esta función tiene como propósito obtener toda la información relacionada al systema yaea el Hostname, la información de la maquina como el SO, tipo de procesador, memoria ram, Dominio, parches de actualización instalados, información de meoria fisica y/o virtual disponible, etc.
+
+Los comandos utilizados son lo siguientes:
+
+hostname
+
+Con este comando tenemos acceso al nombre de máquina
+
+systeminfo
+
+Con este tipo de información podemos tener acceso a información relevante como el dominio , los tipos de parche sinstalados para enviar una falsa actualización de los parches faltantes, información de las tarjetas de red para un ataque de Spoofing.
+
+
+nbtstat -n
+
+Proporciona información relacionada a las interfaces de red inalámbrica o de tarjeta. Dicha información puede ser utilizada mas adelante para conocer la LAN y realizar desde dentro un ataque Min in the middle.
+
+netsh trace show providers
+
+Con este tipo de informacion se puede vulnerar la confidencialidad devido a que revela detalles sobre provedores de eventos. Es decir que a partir de esta data se puede identigicar eventos que pueden ser rastrados, y configurar el rastreo para obtener información
+
+GetUserInfo:
+
+La siguiente función tiene por objetivo recopilar la información de los usuarios del objetivo. los comandos que comprenden la función son lo ssiguientes:
+
+whoami /all
+
+Proporciona información relacionada al  nombre del host y el nombre del usuario del objetivo.
+
+net localgroup Administrators
+
+Proporciona información relacionada a la lista de los miembros del grupo de administradores locales en un sistema windows. Este grupo tiene privilegios elevados y puede realizar casi cualquer accion en el sistema como instalción de softare, configuración de arhivos y accesos.
+
+Con dicha información permite conocer del objetivo las cuentas que cuentan con acceso prvilegiado al sistema.
+
+cmdkey /list
+
+Proporciona información par alistar las credenciales almacenadas en el Administrador de credenciales de windows como usuarios y contraseñas.
+
+Con esta información se puede acceder a recursos de red, sitios web, bases de datos, servidores  u otros servicios aprovechando la vulnerabilidad de que muchos usuarios reutilizan contraseñas
+ 
+Conociendo los usuarios que por lo general pueden ser correos electronicos, se puede ejecutar ataques de phishing.
+
+En combinación con la información del comando anterior se obtiene las credenciales de las cuentas con privilegios elevaos
+
+
+net accounts
+
+Proporciona información relacionada a politicas de contraseñas como longitu de la misma y el tiempo de vida de esas. 
+
+Esta información se puede utilizar para ajustar los ataque sde fuerza bruta
+
+
+
+################### COMANDOS  QUE VULNERAN LA DISPONIBILIDAD ##############
+
+GetNetworkInfo:
+
+El propósito de esta función es recopilar la información relacionada  a la configuración de interfaces de red asi como información de la propia red para ejecutar ataques que afecten la disponibilidad de los servicios, sistemas, archivos, accesos.
+
+ipconfig
+
+Proporciona información general de la configucaón de red del host objetivo. Permite conocer cuales son las interfaces de red y las direcciones IP y MAC.
+
+Con esta información se puede cambiar se puede realizar un ataque de ARP Spoofing al conocer la mac del objetivo para suplantación de identidad o realizar envenenamiento DNS al conocer la dirección fisica de dns.
+
+
+netstat -ano
+
+Proporciona información relacionada a las coneccione sactivas , conteniendo información de  puertos, direcciones ip, protocolos, estados,
+
+Con esta información se puere realizar una expliración de puertos mediante la cual se utiliza los puertos abiertos para identificar servicios servicios que están corriendo en el sistema. Si uno de esos servicios tiene una vulnerabilidad conocida, se puede  explotar para lanzar un ataqu DoS contra ese servicio específico.
+
+Si el atacante tiene acceso a un sistema y puede correlacionar los PIDs con procesos críticos podría intentar finalizar estos procesos utilizando herramientas administrativas de Windows como taskkill, lo que afectaría directamente la disponibilidad de esos servicios.
+
+Conocinedo los puertos disponibles, un atacante puede aprovechar para lanzar inyecciones maliciosas que afecten la disponibilidad de un servicio en especifico por ejemplo aprovechando una vulnerabilidad de una base de datos, logra ingresar al host mediante un puerto abuierto para inyectar un script que aproveche esta vulnerabilidad por ejemplo encriptar la abse de datos. 
+
+netsh interface ip show config
+
+Con este comando se obtiene informació relacionada a la configuración detallada de las interfaces de red utilizadas.
+
+Con esta información un atacante podria inhabilitar alguna interfaz de red indisponiendo el acceso a internet.
+
+Otra forma que puede denegar los ervicios es conocinedo la puerta de enlace  por la cual un atacante puede lanzar varias solicitudes saturando la red generando un ataque DDOS.
+
+Tambien puede cambiar la configuración de red oara hacer un ataque MAN redirigiendo el trafico a un host que controle , bloqueando trafico y suplantando trafico legitimo o bloqueando trafico.
+
+
+GetProcessInfo
+
+El proposito de esta función es ejecutar comandos que obtengan información que permita a un atacante  afectar la disponiblidad de los procesos.
+
+los comandos utilizados son:
+
+tasklist
+
+Proporciona información relacionda a la lista  deprocesos en ejecución
+
+Con est ainformación es posible conocer procesos criticos que un atacante puede finalizar, afectando la disponibilidad.
+
+
+################### COMANDOS QUE VULNERA LA INTEGRIDAD ##############
+
+GetHardwareInformation:
+
+El proposito de esta función es ejecutar comandos wmic que proporcionan información relevante  relacionada a componentes del hardware.
+
+wmic
+
+Este comando proporciona información relevante del sistema operativo, de los componentes fisicos como:
+
+Version del SO
+Arquitecura del SO
+VERSIÓN DEL SO
+Nombre y caracteristicas del procesador
+capacidad de memorychip
+velocidad
+etc
+
+Con est ainformación es posible modificiar la configuración de un procesaor, de un vntilador, de un disco duro, afetando la integridad del mismo pues esto puede no solo ocacionar una falla en el sistema si no que que la configuración se ve comprometida
+
+
+GetDriversInfo:
+
+EL proposito de esta función consite en ejecutar comandos que permitan obtener información relacionada  a los drivers. Los comandos son los siguientes:
+
+driverquery
+
+Este comando permite conocer la información de los drivers instalados y la fecha de vinculaciónal host.
+
+UN atacante podria enviar falsas actualizaciones de drivers para comprometer la integridad de los dispositivios como discos duros.
+
+
+SimulateSpoofing:
+
+El proposito de esta función consiste en  simular un ataque de spoofing. los comandos utilizados son los siguientes:
+
+
+GETMAC
+
+Obtiene la información de la dirección MAC del host objetivo
+
+arp -a
+
+Obtiene la tabla de direcciones mac del host objetivo las cuales corresponden a host de red.
+
+con esta información el atacante puede conocer la dirección de red y la mascara de red, a partir de ahi puede seleccioanr un host de red y suplantar dicha dirección mac para redirigir el trafico.
+
+Este ataque afecta la integridad seguridad y confidencialidad de la red al exponer trafico a un pc malicioso.
+
+
+SetDisponibility
+
+
+Esta función tiene por objetivo deshabilitar la interfaz de red logrando indisponer el acceso dle host objetivo a internet.
+
+
+los comandos utilizados son
+
+netsh interface set interface "Ethernet" admin=disable
+
+deshabilita la interface Ethernet ocn privilegios de administrador
+
+netsh interface set interface "Ethernet" admin=enable
+
+puede con esto habilitar nuevamente la red.
+
+
+
+NOTA:  Para detener el Kelogger.exe debe oprimir "Ctrl + Shift + Q" o detener en el administrador de tareas el proceso KeLogger.exe.
+
+
+
+
+
+

