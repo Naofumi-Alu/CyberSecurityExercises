@@ -1,3 +1,8 @@
 /.nuget
 /KeyloggerMAUIApp
-
+/keyloggerLogs
+/.env
+/.gitignore
+/env
+/dist
+/build

