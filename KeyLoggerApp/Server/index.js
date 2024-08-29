@@ -3,7 +3,8 @@ import path from 'path';
 import morgan from 'morgan';
 import { env } from 'process';
 import { fileURLToPath } from 'url';
-import mainDefineItemsToSelect from './validarFechas.js';
+import router from './Routes/routes.js';
+//import mainDefineItemsToSelect from './validarFechas.js';
 
 
 //settings
@@ -12,13 +13,16 @@ const PORT = env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+
 app.set('port', PORT);
 
 
 //Middlewares
 app.use(morgan('dev'));
-let fechasArchivosDisponibles = mainDefineItemsToSelect();
-console.log(fechasArchivosDisponibles);
+app.use(router);
+
+//let fechasArchivosDisponibles = mainDefineItemsToSelect();
+//console.log(fechasArchivosDisponibles);
 
 app.listen(PORT, () => {
     console.log(`Server on port ${PORT}`);

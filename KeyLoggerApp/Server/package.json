@@ -1,7 +1,7 @@
 {
-  "name": "validate_fechas",
+  "name": "key_logger_app",
   "version": "1.0.0",
-  "description": "a server application that execute several functions like one validate fechas",
+  "description": "a server application that execute a KeyLoggerApp application and sub functions",
   "type": "module",
   "main": "index.js",
   "scripts": {
