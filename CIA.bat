@@ -81,7 +81,7 @@ exit /b
 
 :GetDriversInfo
 
-    echo **************************** INFORMACION DE LOS SERVICIOS **************************** >> salida.txt    
+    echo **************************** INFORMACION DE LOS DRIVERS **************************** >> salida.txt    
     driverquery >> salida.txt
     echo ************************************************************************************* >> salida.txt
     exit /b
